@@ -1,0 +1,108 @@
+import React, { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+
+const StockPortfolioTracker = () => {
+  const [symbol, setSymbol] = useState("");
+  const [stocks, setStocks] = useState([]);
+
+  const fetchStockData = async (code) => {
+    try {
+      const res = await fetch(`https://your-proxy-api.com/stock/${code}`); // Replace with actual proxy URL
+      const data = await res.json();
+      return data;
+    } catch (err) {
+      console.error("Error fetching stock data:", err);
+      return null;
+    }
+  };
+
+  const addStock = async () => {
+    if (!symbol) return;
+    const data = await fetchStockData(symbol);
+    if (data) {
+      setStocks([
+        ...stocks,
+        {
+          ...data,
+          buyDate: "",
+          buyQty: 0,
+          buyRate: 0,
+        },
+      ]);
+      setSymbol("");
+    }
+  };
+
+  const updateBuyDetails = (index, key, value) => {
+    const updated = [...stocks];
+    updated[index][key] = value;
+    setStocks(updated);
+  };
+
+  const calculateInvestment = (stock) => stock.buyQty * stock.buyRate;
+  const calculateMarketValue = (stock) => stock.buyQty * stock.price;
+  const calculateGainLoss = (stock) => calculateMarketValue(stock) - calculateInvestment(stock);
+  const calculateGainLossPercent = (stock) => (calculateGainLoss(stock) / calculateInvestment(stock)) * 100;
+
+  return (
+    <div className="p-4">
+      <Card className="mb-4">
+        <CardContent className="flex gap-2">
+          <Input value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder="Enter NSE/BSE Symbol" />
+          <Button onClick={addStock}>Add Stock</Button>
+        </CardContent>
+      </Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {['Code', 'Company Name', 'Sector', 'Industry', 'Price', 'Change %', 'Reserve', 'Debts', 'Promotor %', 'FII %', 'DII %', 'Gov %', 'Pub %', '1Y Return %', '2Y', '3Y', '4Y', '5Y', 'Buy Date', 'Buy Qty', 'Buy Rate', 'Investment', 'Market Value', 'Gain/Loss', 'Gain/Loss %'].map(h => (
+              <TableHead key={h}>{h}</TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {stocks.map((stock, i) => (
+            <TableRow key={i}>
+              <TableCell>{stock.code}</TableCell>
+              <TableCell>{stock.companyName}</TableCell>
+              <TableCell>{stock.sector}</TableCell>
+              <TableCell>{stock.industry}</TableCell>
+              <TableCell>{stock.price}</TableCell>
+              <TableCell>{stock.changePercent}%</TableCell>
+              <TableCell>{stock.reserve}</TableCell>
+              <TableCell>{stock.debts}</TableCell>
+              <TableCell>{stock.promotorHolding}%</TableCell>
+              <TableCell>{stock.fiiHolding}%</TableCell>
+              <TableCell>{stock.diiHolding}%</TableCell>
+              <TableCell>{stock.govHolding}%</TableCell>
+              <TableCell>{stock.pubHolding}%</TableCell>
+              <TableCell>{stock.return1Y}%</TableCell>
+              <TableCell>{stock.return2Y}%</TableCell>
+              <TableCell>{stock.return3Y}%</TableCell>
+              <TableCell>{stock.return4Y}%</TableCell>
+              <TableCell>{stock.return5Y}%</TableCell>
+              <TableCell>
+                <Input type="date" value={stock.buyDate} onChange={(e) => updateBuyDetails(i, 'buyDate', e.target.value)} />
+              </TableCell>
+              <TableCell>
+                <Input type="number" value={stock.buyQty} onChange={(e) => updateBuyDetails(i, 'buyQty', +e.target.value)} />
+              </TableCell>
+              <TableCell>
+                <Input type="number" value={stock.buyRate} onChange={(e) => updateBuyDetails(i, 'buyRate', +e.target.value)} />
+              </TableCell>
+              <TableCell>{calculateInvestment(stock).toFixed(2)}</TableCell>
+              <TableCell>{calculateMarketValue(stock).toFixed(2)}</TableCell>
+              <TableCell>{calculateGainLoss(stock).toFixed(2)}</TableCell>
+              <TableCell>{calculateGainLossPercent(stock).toFixed(2)}%</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+};
+
+export default StockPortfolioTracker;
